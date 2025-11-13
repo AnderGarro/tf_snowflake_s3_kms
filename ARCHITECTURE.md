@@ -1,6 +1,6 @@
-# Arquitectura del Sistema S3-Snowflake-KMS
+# S3-Snowflake-KMS System Architecture
 
-## 📊 Diagrama de Flujo de Datos
+## 📊 Data Flow Diagram
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -62,32 +62,32 @@
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-## 🔄 Flujo de Operaciones
+## 🔄 Operations Flow
 
-### 1. Carga de Datos (COPY INTO)
+### 1. Data Loading (COPY INTO)
 
 ```
 [Snowflake] ──(1)──> [IAM Role] ──(2)──> [S3 Bucket]
                          │                    │
                          └──(3)──> [KMS] ◀──(4)─┘
                                      │
-                                   (5)──> Descifra datos
+                                   (5)──> Decrypt data
                                      │
                          ┌──(6)◀────┘
                          ↓
                     [Snowflake]
-                  (Datos cargados)
+                  (Data loaded)
 ```
 
-**Pasos:**
-1. Snowflake asume el IAM role con External ID
-2. IAM role solicita acceso a S3
-3. IAM role solicita permiso para descifrar con KMS
-4. S3 solicita clave de descifrado a KMS
-5. KMS verifica permisos y descifra
-6. Datos fluyen a Snowflake
+**Steps:**
+1. Snowflake assumes IAM role with External ID
+2. IAM role requests S3 access
+3. IAM role requests permission to decrypt with KMS
+4. S3 requests decryption key from KMS
+5. KMS verifies permissions and decrypts
+6. Data flows to Snowflake
 
-### 2. Escritura de Datos (COPY FROM)
+### 2. Data Writing (COPY FROM)
 
 ```
 [Snowflake] ──(1)──> [IAM Role] ──(2)──> [S3 Bucket]
@@ -97,32 +97,29 @@
                          ┌──(4)◀────┘        │
                          │                   │
                          └──(5)─────────────>│
-                                   (Datos cifrados se guardan en S3)
-```
+**Steps:**
+1. Snowflake assumes IAM role
+2. IAM role requests to write to S3
+3. IAM role requests encryption key from KMS
+4. KMS generates data key and returns it
+5. Data is encrypted with data key and saved to S3
 
-**Pasos:**
-1. Snowflake asume el IAM role
-2. IAM role solicita escribir en S3
-3. IAM role solicita clave de cifrado a KMS
-4. KMS genera data key y la devuelve
-5. Datos se cifran con data key y se guardan en S3
-
-## 🔐 Capas de Seguridad
+## 🔐 Security Layers
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│ Capa 1: AUTENTICACIÓN                                           │
+│ Layer 1: AUTHENTICATION                                          │
 │ ┌──────────────────────────────────────────────────────────────┐│
 │ │ ✓ Snowflake Storage Integration                             ││
-│ │ ✓ IAM Role Assumption con External ID                        ││
-│ │ ✓ Trust Policy específica                                    ││
+│ │ ✓ IAM Role Assumption with External ID                       ││
+│ │ ✓ Specific Trust Policy                                      ││
 │ └──────────────────────────────────────────────────────────────┘│
 └──────────────────────────────────────────────────────────────────┘
 
 ┌──────────────────────────────────────────────────────────────────┐
-│ Capa 2: AUTORIZACIÓN                                            │
+│ Layer 2: AUTHORIZATION                                           │
 │ ┌──────────────────────────────────────────────────────────────┐│
-│ │ ✓ IAM Policies (S3 + KMS permisos mínimos)                  ││
+│ │ ✓ IAM Policies (S3 + KMS minimum permissions)               ││
 │ │ ✓ S3 Bucket Policy                                           ││
 │ │ ✓ KMS Key Policy                                             ││
 │ │ ✓ Condition Keys (kms:ViaService)                            ││
@@ -130,17 +127,17 @@
 └──────────────────────────────────────────────────────────────────┘
 
 ┌──────────────────────────────────────────────────────────────────┐
-│ Capa 3: ENCRIPTACIÓN                                            │
+│ Layer 3: ENCRYPTION                                              │
 │ ┌──────────────────────────────────────────────────────────────┐│
-│ │ ✓ AWS KMS Key (rotación automática)                         ││
-│ │ ✓ SSE-KMS en S3                                              ││
-│ │ ✓ S3 Bucket Key (reduce API calls)                          ││
-│ │ ✓ Datos cifrados en reposo                                  ││
+│ │ ✓ AWS KMS Key (automatic rotation)                          ││
+│ │ ✓ SSE-KMS on S3                                              ││
+│ │ ✓ S3 Bucket Key (reduces API calls)                         ││
+│ │ ✓ Data encrypted at rest                                    ││
 │ └──────────────────────────────────────────────────────────────┘│
 └──────────────────────────────────────────────────────────────────┘
 
 ┌──────────────────────────────────────────────────────────────────┐
-│ Capa 4: AUDITORÍA                                               │
+│ Layer 4: AUDITING                                                │
 │ ┌──────────────────────────────────────────────────────────────┐│
 │ │ ✓ CloudTrail (KMS + S3 API calls)                           ││
 │ │ ✓ S3 Access Logs                                             ││
@@ -149,46 +146,46 @@
 └──────────────────────────────────────────────────────────────────┘
 
 ┌──────────────────────────────────────────────────────────────────┐
-│ Capa 5: PROTECCIÓN DE DATOS                                     │
+│ Layer 5: DATA PROTECTION                                         │
 │ ┌──────────────────────────────────────────────────────────────┐│
 │ │ ✓ S3 Versioning                                              ││
 │ │ ✓ S3 Lifecycle Rules                                         ││
 │ │ ✓ Public Access Block                                        ││
-│ │ ✓ KMS Deletion Window (10 días)                             ││
+│ │ ✓ KMS Deletion Window (10 days)                             ││
 │ └──────────────────────────────────────────────────────────────┘│
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-## 💰 Modelo de Costos
+## 💰 Cost Model
 
-### Sin S3 Bucket Key:
+### Without S3 Bucket Key:
 ```
-Cada objeto escrito/leído = 1 KMS API call
+Each object written/read = 1 KMS API call
 
-Ejemplo: 1,000,000 objetos/mes
-├─ KMS Requests: 1,000,000 × $0.03/10,000 = $3,000/mes
-├─ KMS Key Storage: $1/mes
-└─ Total KMS: $3,001/mes ❌ MUY CARO
-```
-
-### Con S3 Bucket Key (Implementado):
-```
-Bucket hace batch de requests a KMS
-
-Ejemplo: 1,000,000 objetos/mes
-├─ KMS Requests: ~1,000 × $0.03/10,000 = ~$0.30/mes
-├─ KMS Key Storage: $1/mes
-└─ Total KMS: ~$1.30/mes ✅ ECONÓMICO (99% ahorro)
+Example: 1,000,000 objects/month
+├─ KMS Requests: 1,000,000 × $0.03/10,000 = $3,000/month
+├─ KMS Key Storage: $1/month
+└─ Total KMS: $3,001/month ❌ VERY EXPENSIVE
 ```
 
-## 📈 Recursos Creados
+### With S3 Bucket Key (Implemented):
+```
+Bucket batches requests to KMS
+
+Example: 1,000,000 objects/month
+├─ KMS Requests: ~1,000 × $0.03/10,000 = ~$0.30/month
+├─ KMS Key Storage: $1/month
+└─ Total KMS: ~$1.30/month ✅ ECONOMICAL (99% savings)
+```
+
+## 📈 Resources Created
 
 ```yaml
 AWS Resources:
   KMS:
-    - Key: 1 (con rotación automática)
+    - Key: 1 (with automatic rotation)
     - Alias: 1
-    - Policy: 1 (dinámica)
+    - Policy: 1 (dynamic)
   
   S3:
     - Bucket: 1
@@ -200,7 +197,7 @@ AWS Resources:
   
   IAM:
     - Role: 1
-    - Trust Policy: 1 (dinámica)
+    - Trust Policy: 1 (dynamic)
     - Inline Policy: 1 (S3 + KMS)
 
 Snowflake Resources:
@@ -211,7 +208,7 @@ Snowflake Resources:
   - Grants: 3 (database, schema, integration)
 ```
 
-## 🔗 Dependencias entre Recursos
+## 🔗 Resource Dependencies
 
 ```
 main.tf
@@ -221,7 +218,7 @@ providers.tf
 variables.tf
    ↓
 ┌────────────────────────────────────────┐
-│        Fase 1: Base Resources         │
+│        Phase 1: Base Resources         │
 │  ┌─────────┐       ┌──────────┐       │
 │  │ KMS Key │←──────│ KMS Alias│       │
 │  └────┬────┘       └──────────┘       │
@@ -237,9 +234,9 @@ variables.tf
 └────────────────────────────────────────┘
                  ↓
 ┌────────────────────────────────────────┐
-│      Fase 2: IAM & Integration        │
+│      Phase 2: IAM & Integration        │
 │  ┌──────────┐                          │
-│  │ IAM Role │ (trust policy temporal)  │
+│  │ IAM Role │ (temporary trust policy) │
 │  └────┬─────┘                          │
 │       │                                │
 │       └──→ ┌───────────────────────┐  │
@@ -254,7 +251,7 @@ variables.tf
 └────────────────────────────────────────┘
                  ↓
 ┌────────────────────────────────────────┐
-│        Fase 3: Final Updates          │
+│        Phase 3: Final Updates          │
 │  ┌─────────────────────┐               │
 │  │ Update IAM Trust    │               │
 │  │ Policy with         │               │
@@ -275,23 +272,23 @@ variables.tf
             outputs.tf
 ```
 
-## 🎯 Puntos Clave de la Arquitectura
+## 🎯 Key Architecture Points
 
-1. **Encriptación End-to-End**: Datos siempre cifrados en S3
-2. **Zero Trust**: Multiple capas de autenticación y autorización
-3. **Cost Optimized**: Bucket Key reduce costos de KMS en 99%
-4. **Auto-Managed**: KMS rotation automática cada año
-5. **Auditable**: Todos los accesos registrados
-6. **Resilient**: Versioning protege contra eliminación accidental
-7. **Scalable**: Lifecycle rules gestionan datos antiguos automáticamente
+1. **End-to-End Encryption**: Data always encrypted in S3
+2. **Zero Trust**: Multiple layers of authentication and authorization
+3. **Cost Optimized**: Bucket Key reduces KMS costs by 99%
+4. **Auto-Managed**: Automatic KMS rotation every year
+5. **Auditable**: All accesses logged
+6. **Resilient**: Versioning protects against accidental deletion
+7. **Scalable**: Lifecycle rules manage old data automatically
 
-## 📚 Referencias de Configuración
+## 📚 Configuration References
 
 ### KMS Key Configuration
 ```hcl
-- Deletion Window: 10 días
-- Key Rotation: Enabled (automática anual)
-- Key Policy: Dinámica (se actualiza con Snowflake IAM User)
+- Deletion Window: 10 days
+- Key Rotation: Enabled (automatic annually)
+- Key Policy: Dynamic (updated with Snowflake IAM User)
 - Alias: alias/snowflake-s3-kms-stage
 ```
 
@@ -317,4 +314,4 @@ variables.tf
 
 ---
 
-**Última actualización**: Noviembre 2025
+**Last updated**: November 2025

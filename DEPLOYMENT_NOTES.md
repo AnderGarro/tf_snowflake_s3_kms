@@ -1,72 +1,72 @@
-# Notas de Despliegue - S3-Snowflake-KMS Integration
+# Deployment Notes - S3-Snowflake-KMS Integration
 
-## ✅ Estado Actual
+## ✅ Current Status
 
-**Versión**: V3  
-**Bucket S3**: `s3-snow-kms-test-v3`  
-**Database Snowflake**: `DEMO_KMS_V3`  
-**Última actualización**: 13 noviembre 2025
+**Version**: V3  
+**S3 Bucket**: `s3-snow-kms-test-v3`  
+**Snowflake Database**: `DEMO_KMS_V3`  
+**Last updated**: November 13, 2025
 
 ---
 
-## 🔧 Approach Implementado
+## 🔧 Implemented Approach
 
-### Gestión de Dependencias Circulares
+### Circular Dependency Management
 
-El proyecto usa un **approach de dos fases automático** para resolver la dependencia circular entre IAM Role y Storage Integration:
+The project uses an **automatic two-phase approach** to resolve the circular dependency between IAM Role and Storage Integration:
 
-#### Archivos Clave:
-- **`iam.tf`**: Define IAM role con trust policy temporal inicial
-- **`iam_updated.tf`**: Contiene `null_resource` que actualiza automáticamente el trust policy
+#### Key Files:
+- **`iam.tf`**: Defines IAM role with initial temporary trust policy
+- **`iam_updated.tf`**: Contains `null_resource` that automatically updates the trust policy
 
-#### Flujo:
-1. **Fase 1**: Crear recursos base (KMS, S3, IAM role con trust temporal)
-2. **Storage Integration**: Snowflake crea integration y genera External ID
-3. **Fase 2**: `null_resource` ejecuta `aws iam update-assume-role-policy` automáticamente
-4. **Resultado**: Trust policy actualizado con External ID correcto
+#### Flow:
+1. **Phase 1**: Create base resources (KMS, S3, IAM role with temporary trust)
+2. **Storage Integration**: Snowflake creates integration and generates External ID
+3. **Phase 2**: `null_resource` automatically executes `aws iam update-assume-role-policy`
+4. **Result**: Trust policy updated with correct External ID
 
-### Comando Terraform:
+### Terraform Command:
 ```bash
 terraform init
-terraform apply  # Todo automático
+terraform apply  # Everything automatic
 ```
 
 ---
 
-## 📁 Estructura de Archivos
+## 📁 File Structure
 
 ### Terraform Core
-- `providers.tf` - Configuración de providers (AWS, Snowflake, null)
-- `variables.tf` - Variables de entrada
-- `terraform.tfvars` - Valores actuales (no commiteado)
-- `terraform.tfvars.example` - Plantilla de ejemplo
-- `outputs.tf` - Outputs del deployment
+- `providers.tf` - Providers configuration (AWS, Snowflake, null)
+- `variables.tf` - Input variables
+- `terraform.tfvars` - Current values (not committed)
+- `terraform.tfvars.example` - Example template
+- `outputs.tf` - Deployment outputs
 
-### Recursos AWS
-- `kms.tf` - KMS key con rotación automática
-- `s3.tf` - Bucket S3 con encriptación KMS y Bucket Key
-- `iam.tf` - IAM role con trust policy inicial
-- `iam_updated.tf` - ⭐ Actualización automática del trust policy
+### AWS Resources
+- `kms.tf` - KMS key with automatic rotation
+- `s3.tf` - S3 bucket with KMS encryption and Bucket Key
+- `iam.tf` - IAM role with initial trust policy
+- `iam_updated.tf` - ⭐ Automatic trust policy update
 
-### Recursos Snowflake
-- `snowflake.tf` - Database, Schema, Storage Integration y Stage
-- `main.tf` - Orquestación principal
+### Snowflake Resources
+- `snowflake.tf` - Database, Schema, Storage Integration and Stage
+- `main.tf` - Main orchestration
 
-### Documentación
-- `README.md` - Documentación completa
-- `QUICKSTART.md` - Guía rápida de inicio
-- `ARCHITECTURE.md` - Diagramas y arquitectura
-- `DEPLOYMENT_NOTES.md` - Este archivo
+### Documentation
+- `README.md` - Complete documentation
+- `QUICKSTART.md` - Quick start guide
+- `ARCHITECTURE.md` - Diagrams and architecture
+- `DEPLOYMENT_NOTES.md` - This file
 
-### Scripts y Tests
-- `commands.sh` - Script interactivo con comandos útiles
-- `test_snowflake.sql` - Tests completos SQL
-- `test_snowflake_connection.sql` - Test rápido de conexión
-- `test_data.csv` - Datos de prueba
+### Scripts and Tests
+- `commands.sh` - Interactive script with useful commands
+- `test_snowflake.sql` - Complete SQL tests
+- `test_snowflake_connection.sql` - Quick connection test
+- `test_data.csv` - Test data
 
 ---
 
-## 🔑 Configuración Actual
+## 🔑 Current Configuration
 
 ### AWS
 - **Account ID**: 997439898896
@@ -87,7 +87,7 @@ terraform apply  # Todo automático
 
 ---
 
-## 🧪 Verificación Rápida
+## 🧪 Quick Verification
 
 ### AWS
 ```bash
@@ -116,10 +116,10 @@ USE ROLE ACCOUNTADMIN;
 USE DATABASE DEMO_KMS_V3;
 USE SCHEMA DEMO_SCHEMA;
 
--- Ver Storage Integration
+-- View Storage Integration
 DESC INTEGRATION S3_INTEGRATION_KMS;
 
--- Listar archivos
+-- List files
 LIST @S3_STAGE_KMS;
 
 -- Test load
@@ -142,18 +142,18 @@ SELECT * FROM test_load;
 
 ### Error: "Could not assume role"
 
-✅ **Resuelto automáticamente** por `null_resource.update_iam_trust_policy`
+✅ **Automatically resolved** by `null_resource.update_iam_trust_policy`
 
-Si persiste:
+If it persists:
 ```bash
-# Forzar actualización del trust policy
+# Force trust policy update
 terraform taint null_resource.update_iam_trust_policy
 terraform apply
 ```
 
 ### Error: "Access Denied - KMS"
 
-Verifica que la KMS key policy incluye el Snowflake IAM User:
+Verify that the KMS key policy includes the Snowflake IAM User:
 ```bash
 aws kms get-key-policy \
   --key-id alias/snowflake-s3-kms-stage \
@@ -161,31 +161,31 @@ aws kms get-key-policy \
   --region eu-west-1
 ```
 
-### Verificar Estado Completo
+### Verify Complete State
 
 ```bash
-# Ver todos los outputs
+# View all outputs
 terraform output
 
-# Ver estado de recursos
+# View resource state
 terraform state list
 
-# Verificar null_resource
+# Verify null_resource
 terraform state show null_resource.update_iam_trust_policy
 ```
 
 ---
 
-## 📝 Mantenimiento
+## 📝 Maintenance
 
-### Actualizar Trust Policy Manualmente (si es necesario)
+### Update Trust Policy Manually (if needed)
 
 ```bash
-# Obtener valores actuales
+# Get current values
 EXTERNAL_ID=$(terraform output -raw snowflake_external_id)
 IAM_USER=$(terraform output -raw snowflake_iam_user_arn)
 
-# Actualizar
+# Update
 aws iam update-assume-role-policy \
   --role-name snowflake-s3-kms-role \
   --policy-document "{
@@ -201,51 +201,51 @@ aws iam update-assume-role-policy \
   }"
 ```
 
-### Recrear Storage Integration
+### Recreate Storage Integration
 
-Si necesitas recrear el Storage Integration:
+If you need to recreate the Storage Integration:
 ```bash
-# Eliminar
+# Delete
 terraform destroy -target=snowflake_stage.s3_stage
 terraform destroy -target=snowflake_storage_integration.s3_integration_kms
 
-# Recrear
+# Recreate
 terraform apply
 ```
 
-### Cambiar a Nuevo Bucket
+### Change to New Bucket
 
 ```bash
-# Editar terraform.tfvars
+# Edit terraform.tfvars
 s3_bucket_name = "s3-snow-kms-test-v4"
 
-# Aplicar
+# Apply
 terraform apply
 
-# El null_resource se ejecutará automáticamente
+# null_resource will execute automatically
 ```
 
 ---
 
-## 💡 Mejores Prácticas
+## 💡 Best Practices
 
-1. **Siempre ejecutar `terraform plan` antes de `apply`**
-2. **El `null_resource` se ejecuta automáticamente cuando cambian**:
-   - External ID del Storage Integration
-   - IAM User ARN del Storage Integration
-   - Nombre del IAM Role
-3. **No elimines `iam_updated.tf`** - es crítico para la gestión automática
-4. **Usa `terraform refresh`** después de cambios manuales en AWS/Snowflake
-5. **Mantén `terraform.tfvars` fuera de git** (ya está en .gitignore)
+1. **Always run `terraform plan` before `apply`**
+2. **The `null_resource` executes automatically when these change**:
+   - Storage Integration External ID
+   - Storage Integration IAM User ARN
+   - IAM Role name
+3. **Don't delete `iam_updated.tf`** - it's critical for automatic management
+4. **Use `terraform refresh`** after manual changes in AWS/Snowflake
+5. **Keep `terraform.tfvars` out of git** (already in .gitignore)
 
 ---
 
-## 🔗 Referencias
+## 🔗 References
 
-- **README.md** - Documentación completa del proyecto
-- **QUICKSTART.md** - Inicio rápido en 5 minutos
-- **ARCHITECTURE.md** - Diagramas detallados de arquitectura
-- **commands.sh** - 13 comandos útiles interactivos
+- **README.md** - Complete project documentation
+- **QUICKSTART.md** - 5-minute quick start
+- **ARCHITECTURE.md** - Detailed architecture diagrams
+- **commands.sh** - 13 useful interactive commands
 
 ---
 

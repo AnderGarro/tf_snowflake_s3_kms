@@ -1,101 +1,101 @@
-# Guía de Inicio Rápido - Terraform S3-Snowflake-KMS
+# Quick Start Guide - Terraform S3-Snowflake-KMS
 
-## 🚀 Despliegue en 5 Minutos
+## 🚀 5-Minute Deployment
 
-### Paso 1: Verificar Prerrequisitos
+### Step 1: Verify Prerequisites
 
 ```bash
-# Verificar Terraform
+# Verify Terraform
 terraform version
-# Debe mostrar: Terraform v1.0+
+# Should show: Terraform v1.0+
 
-# Verificar AWS CLI
+# Verify AWS CLI
 aws --version
 aws sts get-caller-identity
-# Debe mostrar tu Account ID: 997439898896
+# Should show your Account ID: 997439898896
 
-# Verificar credenciales
+# Verify credentials
 cat terraform.tfvars | grep -v "password\|secret"
 ```
 
-### Paso 2: Inicializar
+### Step 2: Initialize
 
 ```bash
 terraform init
 ```
 
-Deberías ver:
+You should see:
 ```
 Terraform has been successfully initialized!
 ```
 
-### Paso 3: Desplegar (Opción Recomendada)
+### Step 3: Deploy (Recommended Option)
 
-**Opción A - Despliegue en Fases (Recomendado):**
+**Option A - Phased Deployment (Recommended):**
 
 ```bash
-# Fase 1: KMS
+# Phase 1: KMS
 terraform apply -target=aws_kms_key.snowflake_s3 -target=aws_kms_alias.snowflake_s3 -auto-approve
 
-# Fase 2: S3
+# Phase 2: S3
 terraform apply -target=aws_s3_bucket.snowflake_stage -auto-approve
 
-# Fase 3: IAM
+# Phase 3: IAM
 terraform apply -target=aws_iam_role.snowflake_role -auto-approve
 
-# Fase 4: Snowflake Database y Schema
+# Phase 4: Snowflake Database and Schema
 terraform apply -target=snowflake_database.demo -target=snowflake_schema.demo -auto-approve
 
-# Fase 5: Storage Integration
+# Phase 5: Storage Integration
 terraform apply -target=snowflake_storage_integration.s3_integration_kms -auto-approve
 
-# Fase 6: Finalizar todo
+# Phase 6: Complete everything
 terraform apply -auto-approve
 ```
 
-**Opción B - Despliegue Completo:**
+**Option B - Full Deployment:**
 
 ```bash
 terraform apply
-# Escribe: yes
+# Type: yes
 ```
 
-**Opción C - Usar el Script Interactivo:**
+**Option C - Use Interactive Script:**
 
 ```bash
 ./commands.sh
-# Selecciona opción 4: "Aplicar en fases"
+# Select option 4: "Apply in phases"
 ```
 
-### Paso 4: Verificar Outputs
+### Step 4: Verify Outputs
 
 ```bash
 terraform output
 ```
 
-Deberías ver algo como:
+You should see something like:
 
 ```
 kms_key_arn = "arn:aws:kms:eu-west-1:997439898896:key/xxxx-xxxx-xxxx"
 kms_key_alias = "alias/snowflake-s3-kms-stage"
 ```bash
-# S3 Bucket name (debe ser único globalmente)
+# S3 Bucket name (must be globally unique)
 s3_bucket_name = "s3-snow-kms-test-v3"
 iam_role_arn = "arn:aws:iam::997439898896:role/snowflake-s3-kms-role"
 snowflake_iam_user_arn = "arn:aws:iam::260512157176:user/xxxx"
 ```
 
-### Paso 5: Verificar en AWS
+### Step 5: Verify in AWS
 
 ```bash
-# Verificar KMS
+# Verify KMS
 aws kms describe-key --key-id alias/snowflake-s3-kms-stage --region eu-west-1
 
-# Verificar encriptación S3
+# Verify S3 encryption
 aws s3api get-bucket-encryption --bucket s3-snow-kms-test-v3
 ```
 
-Deberías ver:
+You should see:
 ```json
 {
     "SSEAlgorithm": "aws:kms",
@@ -104,25 +104,25 @@ Deberías ver:
 }
 ```
 
-### Paso 6: Test de Subida
+### Step 6: Upload Test
 
 ```bash
-# Crear archivo de prueba
+# Create test file
 echo "id,name,value
 1,test1,100
 2,test2,200" > test.csv
 
-# Subir a S3
+# Upload to S3
 aws s3 cp test.csv s3://s3-snow-kms-test-v3/snowflake-data/
 
-# Verificar encriptación
+# Verify encryption
 aws s3api head-object \
   --bucket s3-snow-kms-test-v3 \
   --key snowflake-data/test.csv \
   --query '{Encryption: ServerSideEncryption, KMSKeyId: SSEKMSKeyId}'
 ```
 
-Deberías ver:
+You should see:
 ```json
 {
     "Encryption": "aws:kms",
@@ -130,148 +130,147 @@ Deberías ver:
 }
 ```
 
-### Paso 7: Verificar en Snowflake
+### Step 7: Verify in Snowflake
 
-Abre Snowflake Web UI o usa SnowSQL:
+Open Snowflake Web UI or use SnowSQL:
 
 ```sql
 ```sql
 USE ROLE ACCOUNTADMIN;
 USE DATABASE DEMO_KMS_V3;
 
--- Verificar Storage Integration
+-- Verify Storage Integration
 DESC INTEGRATION S3_INTEGRATION_KMS;
 
--- Listar archivos
+-- List files
 LIST @S3_STAGE_KMS;
 ```
 
-Deberías ver `test.csv` en la lista.
-
-### Paso 8: Test de Carga
+You should see `test.csv` in the list.
+### Step 8: Load Test
 
 ```sql
--- Crear tabla
+-- Create table
 CREATE OR REPLACE TABLE test_load (
     id INTEGER,
     name VARCHAR,
     value INTEGER
 );
 
--- Cargar datos
+-- Load data
 COPY INTO test_load
 FROM @S3_STAGE_KMS/test.csv
 FILE_FORMAT = (TYPE = CSV SKIP_HEADER = 1);
 
--- Verificar
+-- Verify
 SELECT * FROM test_load;
 ```
 
-Deberías ver:
+You should see:
 ```
 ID | NAME  | VALUE
 1  | test1 | 100
 2  | test2 | 200
 ```
 
-## ✅ Checklist de Verificación
+## ✅ Verification Checklist
 
-- [ ] Terraform init exitoso
-- [ ] Terraform apply completado sin errores
-- [ ] KMS key creada con alias
-- [ ] S3 bucket con encriptación KMS
-- [ ] Bucket key habilitado
-- [ ] IAM role creado
-- [ ] Storage Integration en Snowflake
-- [ ] Stage funcional
-- [ ] Test de subida a S3 exitoso
-- [ ] Archivo encriptado con KMS
-- [ ] Test de carga en Snowflake exitoso
+- [ ] Terraform init successful
+- [ ] Terraform apply completed without errors
+- [ ] KMS key created with alias
+- [ ] S3 bucket with KMS encryption
+- [ ] Bucket key enabled
+- [ ] IAM role created
+- [ ] Storage Integration in Snowflake
+- [ ] Functional stage
+- [ ] S3 upload test successful
+- [ ] File encrypted with KMS
+- [ ] Snowflake load test successful
 
-## 🚨 Si algo falla
+## 🚨 If Something Fails
 
 ### Error: "Bucket name already exists"
 
 ```bash
-# Cambiar nombre del bucket en terraform.tfvars
-s3_bucket_name = "s3-snow-kms-test-v3-TU-NOMBRE"
+# Change bucket name in terraform.tfvars
+s3_bucket_name = "s3-snow-kms-test-v3-YOUR-NAME"
 
-# Aplicar de nuevo
+# Apply again
 terraform apply
 ```
 
 ### Error: "Database already exists"
 
 ```bash
-# Cambiar nombre en terraform.tfvars
+# Change name in terraform.tfvars
 snowflake_database = "DEMO_KMS_V3"
 
-# Aplicar de nuevo
+# Apply again
 terraform apply
 ```
 
 ### Error: "Access Denied - KMS"
 
 ```bash
-# Verificar que el IAM role tiene permisos
+# Verify IAM role has permissions
 aws iam get-role-policy \
   --role-name snowflake-s3-kms-role \
   --policy-name snowflake-s3-kms-s3-kms-policy
 
-# Re-aplicar para actualizar políticas
+# Re-apply to update policies
 terraform apply -target=aws_kms_key_policy.snowflake_s3 -auto-approve
 ```
 
-### Error: Dependencias Circulares
+### Error: Circular Dependencies
 
 ```bash
-# Usar despliegue en fases (Opción A arriba)
-# O usar el script:
+# Use phased deployment (Option A above)
+# Or use the script:
 ./commands.sh
-# Selecciona opción 4
+# Select option 4
 ```
 
-## 🔄 Actualizar el Proyecto
+## 🔄 Update the Project
 
-Si necesitas hacer cambios:
+If you need to make changes:
 
 ```bash
-# 1. Editar terraform.tfvars o archivos .tf
+# 1. Edit terraform.tfvars or .tf files
 nano terraform.tfvars
 
-# 2. Ver cambios
+# 2. View changes
 terraform plan
 
-# 3. Aplicar
+# 3. Apply
 terraform apply
 ```
 
-## 🗑️ Limpiar Todo
+## 🗑️ Clean Up Everything
 
 ```bash
-# Ver qué se eliminará
+# View what will be deleted
 terraform plan -destroy
 
-# Confirmar y destruir
+# Confirm and destroy
 terraform destroy
-# Escribe: yes
+# Type: yes
 ```
 
-## 📝 Siguiente Pasos
+## 📝 Next Steps
 
-1. **Revisa los outputs detallados:**
+1. **Review detailed outputs:**
    ```bash
    terraform output quick_reference
    terraform output verification_commands
    ```
 
-2. **Prueba el script SQL completo:**
+2. **Test the complete SQL script:**
    ```bash
-   # En Snowflake Web UI, copia y pega:
+   # In Snowflake Web UI, copy and paste:
    cat test_snowflake.sql
    ```
 
-3. **Monitorea costos de KMS:**
+3. **Monitor KMS costs:**
    ```bash
    aws cloudwatch get-metric-statistics \
      --namespace AWS/KMS \
@@ -283,18 +282,18 @@ terraform destroy
      --statistics Sum
    ```
 
-## 🎓 Aprende Más
+## 🎓 Learn More
 
-- Lee el `README.md` completo para detalles
-- Revisa `test_snowflake.sql` para pruebas avanzadas
-- Consulta los comentarios en archivos `.tf` para entender cada recurso
+- Read the complete `README.md` for details
+- Review `test_snowflake.sql` for advanced tests
+- Check comments in `.tf` files to understand each resource
 
 ## 💡 Tips
 
-- **Bucket Key** está habilitado = costos de KMS reducidos ~99%
-- **KMS Rotation** está activa = mejor seguridad
-- **Versioning** en S3 = protección contra eliminación accidental
-- **External ID** en IAM = protección contra confused deputy attack
+- **Bucket Key** is enabled = KMS costs reduced ~99%
+- **KMS Rotation** is active = better security
+- **Versioning** in S3 = protection against accidental deletion
+- **External ID** in IAM = protection against confused deputy attack
 
 ---
 

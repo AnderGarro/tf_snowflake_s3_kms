@@ -4,18 +4,18 @@
 [![AWS](https://img.shields.io/badge/AWS-KMS%20%7C%20S3%20%7C%20IAM-FF9900?logo=amazon-aws)](https://aws.amazon.com/)
 [![Snowflake](https://img.shields.io/badge/Snowflake-Storage%20Integration-29B5E8?logo=snowflake)](https://www.snowflake.com/)
 
-Proyecto Terraform que implementa una integración completa y segura entre **AWS S3** y **Snowflake** utilizando **encriptación KMS** para máxima protección de datos.
+Complete and secure Terraform project that implements integration between **AWS S3** and **Snowflake** using **KMS encryption** for maximum data protection.
 
-## 🌟 Características
+## 🌟 Features
 
-- ✅ **Encriptación KMS**: Bucket S3 encriptado con AWS KMS y rotación automática de keys
-- ✅ **S3 Bucket Key**: Optimización de costos KMS (~99% reducción)
-- ✅ **IAM Seguro**: Permisos mínimos necesarios con External ID
-- ✅ **Gestión Automática**: Dependencias circulares resueltas automáticamente
-- ✅ **Storage Integration**: Integración nativa Snowflake-S3 con KMS
-- ✅ **External Stage**: Stage configurado para carga y descarga de datos
-- ✅ **Lifecycle Policies**: Gestión automática de versiones y archivos antiguos
-- ✅ **Seguridad Total**: Bucket completamente privado con múltiples capas de seguridad
+- ✅ **KMS Encryption**: S3 bucket encrypted with AWS KMS and automatic key rotation
+- ✅ **S3 Bucket Key**: KMS cost optimization (~99% reduction)
+- ✅ **Secure IAM**: Least privilege permissions with External ID
+- ✅ **Automatic Management**: Circular dependencies resolved automatically
+- ✅ **Storage Integration**: Native Snowflake-S3 integration with KMS
+- ✅ **External Stage**: Stage configured for data loading and unloading
+- ✅ **Lifecycle Policies**: Automatic management of versions and old files
+- ✅ **Total Security**: Fully private bucket with multiple security layers
 
 ## 🏗️ Arquitectura
 
@@ -93,72 +93,72 @@ aws_access_key = "TU_ACCESS_KEY"
 aws_secret_key = "TU_SECRET_KEY"
 
 # S3
-s3_bucket_name = "mi-bucket-unico"  # Debe ser único globalmente
+s3_bucket_name = "my-unique-bucket"  # Must be globally unique
 
 # Snowflake
 snowflake_account  = "TU_ACCOUNT"
-snowflake_user     = "TU_USUARIO"
-snowflake_password = "TU_PASSWORD"
+snowflake_user     = "YOUR_USER"
+snowflake_password = "YOUR_PASSWORD"
 snowflake_database = "DEMO_KMS_V3"
 ```
 
-## 📁 Estructura del Proyecto
+## 📁 Project Structure
 
 ```
 tf_snowflake_s3_kms/
-├── providers.tf          # Configuración de providers (AWS, Snowflake, null)
-├── variables.tf          # Variables de entrada
-├── main.tf               # Orquestación principal
-├── kms.tf                # KMS key con rotación automática
-├── s3.tf                 # Bucket S3 con encriptación KMS
-├── iam.tf                # IAM role con trust policy inicial
-├── iam_updated.tf        # ⭐ Auto-actualización trust policy
+├── providers.tf          # Providers configuration (AWS, Snowflake, null)
+├── variables.tf          # Input variables
+├── main.tf               # Main orchestration
+├── kms.tf                # KMS key with automatic rotation
+├── s3.tf                 # S3 bucket with KMS encryption
+├── iam.tf                # IAM role with initial trust policy
+├── iam_updated.tf        # ⭐ Auto-update trust policy
 ├── snowflake.tf          # Database, schema, storage integration, stage
-├── outputs.tf            # Outputs del deployment
+├── outputs.tf            # Deployment outputs
 │
-├── README.md             # Documentación completa
-├── QUICKSTART.md         # Guía rápida de inicio
-├── ARCHITECTURE.md       # Diagramas detallados
-├── DEPLOYMENT_NOTES.md   # Notas técnicas
+├── README.md             # Complete documentation
+├── QUICKSTART.md         # Quick start guide
+├── ARCHITECTURE.md       # Detailed diagrams
+├── DEPLOYMENT_NOTES.md   # Technical notes
 │
-├── commands.sh           # Script interactivo con comandos útiles
-├── test_snowflake.sql    # Tests SQL completos
-└── test_snowflake_connection.sql  # Test rápido
+├── commands.sh           # Interactive script with useful commands
+├── test_snowflake.sql    # Complete SQL tests
+└── test_snowflake_connection.sql  # Quick test
 ```
 
-## 🔐 Seguridad
+## 🔐 Security
 
-### Características Implementadas
+### Implemented Features
 
-- **KMS Key Rotation**: Rotación automática anual de keys
-- **External ID**: Previene confused deputy attacks
-- **Least Privilege**: Permisos IAM mínimos necesarios
-- **Condition Keys**: KMS solo vía S3 service (`kms:ViaService`)
-- **Public Block**: Bucket completamente privado
-- **Versioning**: Protección contra borrado accidental
-- **Bucket Policy**: Restricción a IAM role específico
-- **Multi-layer Security**: 5 capas de seguridad (ver `ARCHITECTURE.md`)
+- **KMS Key Rotation**: Automatic annual key rotation
+- **External ID**: Prevents confused deputy attacks
+- **Least Privilege**: Minimum necessary IAM permissions
+- **Condition Keys**: KMS only via S3 service (`kms:ViaService`)
+- **Public Block**: Completely private bucket
+- **Versioning**: Protection against accidental deletion
+- **Bucket Policy**: Restriction to specific IAM role
+- **Multi-layer Security**: 5 security layers (see `ARCHITECTURE.md`)
 
-### Datos Sensibles Protegidos
+### Protected Sensitive Data
 
-El `.gitignore` excluye automáticamente:
-- `*.tfvars` (credenciales)
-- `*.tfstate` (información de recursos)
-- Archivos de test con datos reales
-- Backups y archivos temporales
+The `.gitignore` automatically excludes:
+- `*.tfvars` (credentials)
+- `*.tfstate` (resource information)
+- Test files with real data
+- Backups and temporary files
 
-## 🧪 Verificación Post-Despliegue
+## 🧪 Post-Deployment Verification
 
 ### AWS
 
 ```bash
-# Verificar KMS
+# Verify KMS
 aws kms describe-key --key-id alias/snowflake-s3-kms-stage --region eu-west-1
 
-# Verificar encriptación S3
+# Verify S3 encryption
 terraform output s3_bucket_name | xargs -I {} aws s3api get-bucket-encryption --bucket {}
 
-# Test de subida
+# Upload test
 aws s3 cp test.csv s3://$(terraform output -raw s3_bucket_name)/snowflake-data/
 ```
 
@@ -169,83 +169,83 @@ USE ROLE ACCOUNTADMIN;
 USE DATABASE DEMO_KMS_V3;
 USE SCHEMA DEMO_SCHEMA;
 
--- Verificar Storage Integration
+-- Verify Storage Integration
 DESC INTEGRATION S3_INTEGRATION_KMS;
 
--- Listar archivos
+-- List files
 LIST @S3_STAGE_KMS;
 
--- Test de carga
+-- Load test
 CREATE TABLE test_load (col1 STRING, col2 STRING);
 COPY INTO test_load FROM @S3_STAGE_KMS FILE_FORMAT = (TYPE = CSV);
 SELECT * FROM test_load;
 ```
 
-## 💰 Optimización de Costos
+## 💰 Cost Optimization
 
-### S3 Bucket Key Habilitado
+### S3 Bucket Key Enabled
 
-- ✅ Reduce KMS API calls en ~99%
-- ✅ Sin impacto en seguridad
-- ✅ Ahorro significativo:
-  - **Sin Bucket Key**: 1M objetos = ~$3,000/mes
-  - **Con Bucket Key**: 1M objetos = ~$30/mes
+- ✅ Reduces KMS API calls by ~99%
+- ✅ No security impact
+- ✅ Significant savings:
+  - **Without Bucket Key**: 1M objects = ~$3,000/month
+  - **With Bucket Key**: 1M objects = ~$30/month
 
 ### Lifecycle Policies
 
-- Transición a IA después de 30 días
-- Transición a Glacier después de 90 días
-- Eliminación de versiones antiguas automática
+- Transition to IA after 30 days
+- Transition to Glacier after 90 days
+- Automatic deletion of old versions
 
-## 📊 Outputs Principales
+## 📊 Main Outputs
 
-Después del despliegue:
+After deployment:
 
 ```bash
 terraform output
 
-# Outputs incluyen:
-# - kms_key_arn: ARN de la KMS key
-# - s3_bucket_name: Nombre del bucket creado
-# - iam_role_arn: ARN del role de Snowflake
-# - snowflake_iam_user_arn: Usuario IAM de Snowflake
-# - snowflake_external_id: External ID para trust policy
-# - verification_commands: Comandos para verificar el deployment
+# Outputs include:
+# - kms_key_arn: KMS key ARN
+# - s3_bucket_name: Created bucket name
+# - iam_role_arn: Snowflake role ARN
+# - snowflake_iam_user_arn: Snowflake IAM user
+# - snowflake_external_id: External ID for trust policy
+# - verification_commands: Commands to verify deployment
 ```
 
-## 🔄 Actualización
+## 🔄 Updates
 
 ```bash
-# Cambiar configuración en terraform.tfvars
+# Change configuration in terraform.tfvars
 nano terraform.tfvars
 
-# Ver cambios
+# View changes
 terraform plan
 
-# Aplicar
+# Apply
 terraform apply
 
-# El null_resource actualizará el trust policy automáticamente si es necesario
+# null_resource will automatically update trust policy if needed
 ```
 
-## 🗑️ Limpieza
+## 🗑️ Cleanup
 
 ```bash
-# Destruir todos los recursos
+# Destroy all resources
 terraform destroy
 
-# ⚠️ Advertencia: 
-# - La KMS key entrará en periodo de eliminación (10 días)
-# - Los objetos en S3 se eliminarán permanentemente
+# ⚠️ Warning: 
+# - KMS key will enter deletion period (10 days)
+# - S3 objects will be permanently deleted
 ```
 
 ## 🚨 Troubleshooting
 
 ### Error: "Could not assume role"
 
-✅ **Resuelto automáticamente** por `null_resource.update_iam_trust_policy`
+✅ **Automatically resolved** by `null_resource.update_iam_trust_policy`
 
-Si persiste:
+If it persists:
 ```bash
 terraform taint null_resource.update_iam_trust_policy
 terraform apply
@@ -253,35 +253,35 @@ terraform apply
 
 ### Error: "Access Denied - KMS"
 
-Verifica la política de KMS:
+Verify KMS policy:
 ```bash
 aws kms get-key-policy --key-id alias/snowflake-s3-kms-stage --policy-name default
 ```
 
-Ver más soluciones en `README.md` y `DEPLOYMENT_NOTES.md`.
+See more solutions in `README.md` and `DEPLOYMENT_NOTES.md`.
 
-## 📚 Documentación
+## 📚 Documentation
 
-- **[README.md](README.md)** - Documentación completa del proyecto
-- **[QUICKSTART.md](QUICKSTART.md)** - Guía de inicio en 5 minutos
-- **[ARCHITECTURE.md](ARCHITECTURE.md)** - Diagramas y arquitectura detallada
-- **[DEPLOYMENT_NOTES.md](DEPLOYMENT_NOTES.md)** - Notas técnicas y approach
+- **[README.md](README.md)** - Complete project documentation
+- **[QUICKSTART.md](QUICKSTART.md)** - 5-minute quick start guide
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** - Detailed diagrams and architecture
+- **[DEPLOYMENT_NOTES.md](DEPLOYMENT_NOTES.md)** - Technical notes and approach
 
-## 🤝 Contribuir
+## 🤝 Contributing
 
-Las contribuciones son bienvenidas! Por favor:
+Contributions are welcome! Please:
 
-1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
+1. Fork the project
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-## 📝 Licencia
+## 📝 License
 
-Este proyecto está bajo la Licencia MIT. Ver `LICENSE` para más información.
+This project is licensed under the MIT License. See `LICENSE` for more information.
 
-## 🔗 Referencias
+## 🔗 References
 
 - [Snowflake: Using AWS KMS](https://docs.snowflake.com/en/user-guide/data-load-s3-kms)
 - [AWS KMS Best Practices](https://docs.aws.amazon.com/kms/latest/developerguide/best-practices.html)
@@ -289,12 +289,12 @@ Este proyecto está bajo la Licencia MIT. Ver `LICENSE` para más información.
 - [Terraform AWS Provider](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
 - [Terraform Snowflake Provider](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/latest/docs)
 
-## ⭐ Agradecimientos
+## ⭐ Acknowledgments
 
-Si este proyecto te fue útil, considera darle una estrella ⭐ en GitHub!
+If this project was useful to you, consider giving it a star ⭐ on GitHub!
 
 ---
 
-**Autor**: Ander Garro  
-**Última actualización**: Noviembre 2025  
-**Versión**: 1.0
+**Author**: Ander Garro  
+**Last updated**: November 2025  
+**Version**: 1.0

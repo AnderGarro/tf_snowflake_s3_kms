@@ -1,19 +1,19 @@
 # Terraform S3-Snowflake Integration with KMS Encryption
 
-Este proyecto implementa una integración completa entre AWS S3 y Snowflake utilizando **encriptación KMS** para máxima seguridad de datos.
+This project implements a complete integration between AWS S3 and Snowflake using **KMS encryption** for maximum data security.
 
-## 📋 Características
+## 📋 Features
 
-- ✅ **Encriptación KMS**: Bucket S3 encriptado con AWS KMS
-- ✅ **S3 Bucket Key**: Reduce costos de KMS en ~99%
-- ✅ **Rotación automática**: KMS key rotation habilitada
-- ✅ **IAM seguro**: Permisos mínimos necesarios con External ID
-- ✅ **Storage Integration**: Integración nativa Snowflake-S3 con KMS
-- ✅ **External Stage**: Stage configurado para carga de datos
-- ✅ **Lifecycle policies**: Gestión automática de versiones y archivos antiguos
-- ✅ **Bloqueo público**: Bucket completamente privado
+- ✅ **KMS Encryption**: S3 bucket encrypted with AWS KMS
+- ✅ **S3 Bucket Key**: Reduces KMS costs by ~99%
+- ✅ **Automatic rotation**: KMS key rotation enabled
+- ✅ **Secure IAM**: Minimum necessary permissions with External ID
+- ✅ **Storage Integration**: Native Snowflake-S3 integration with KMS
+- ✅ **External Stage**: Stage configured for data loading
+- ✅ **Lifecycle policies**: Automatic management of versions and old files
+- ✅ **Public blocking**: Completely private bucket
 
-## 🏗️ Arquitectura
+## 🏗️ Architecture
 
 ```
 ┌─────────────────┐
@@ -38,188 +38,188 @@ Este proyecto implementa una integración completa entre AWS S3 y Snowflake util
 └────────────────────────────────┘
 ```
 
-## 📦 Estructura del Proyecto
+## 📦 Project Structure
 
 ```
 terraform-s3-snowflake-kms/
-├── providers.tf           # Configuración de providers AWS y Snowflake
-├── variables.tf           # Definición de variables
-├── outputs.tf             # Outputs con información útil
-├── main.tf                # Orquestación principal
-├── kms.tf                 # KMS key, alias y políticas
-├── s3.tf                  # Bucket S3 con encriptación KMS
-├── iam.tf                 # IAM role y políticas para Snowflake
-├── snowflake.tf           # Database, schema, storage integration y stage
-├── terraform.tfvars.example  # Plantilla de variables
-├── .gitignore             # Archivos a ignorar en git
-└── README.md              # Este archivo
+├── providers.tf           # AWS and Snowflake providers configuration
+├── variables.tf           # Variable definitions
+├── outputs.tf             # Outputs with useful information
+├── main.tf                # Main orchestration
+├── kms.tf                 # KMS key, alias and policies
+├── s3.tf                  # S3 bucket with KMS encryption
+├── iam.tf                 # IAM role and policies for Snowflake
+├── snowflake.tf           # Database, schema, storage integration and stage
+├── terraform.tfvars.example  # Variables template
+├── .gitignore             # Files to ignore in git
+└── README.md              # This file
 ```
 
-## 🚀 Inicio Rápido
+## 🚀 Quick Start
 
-### Prerrequisitos
+### Prerequisites
 
 1. **Terraform** >= 1.0
-2. **AWS CLI** configurado
-3. **Cuenta Snowflake** con permisos de ACCOUNTADMIN
-4. **Credenciales AWS** con permisos para crear:
+2. **AWS CLI** configured
+3. **Snowflake account** with ACCOUNTADMIN permissions
+4. **AWS credentials** with permissions to create:
    - KMS keys
    - S3 buckets
-   - IAM roles y policies
+   - IAM roles and policies
 
-### Paso 1: Clonar y Configurar
+### Step 1: Clone and Configure
 
 ```bash
-# Navegar al directorio
+# Navigate to directory
 cd terraform-s3-snowflake-kms
 
-# Copiar archivo de variables
+# Copy variables file
 cp terraform.tfvars.example terraform.tfvars
 
-# Editar con tus credenciales
+# Edit with your credentials
 nano terraform.tfvars
 ```
 
-### Paso 2: Configurar Variables
+### Step 2: Configure Variables
 
-Edita `terraform.tfvars` con tus valores:
+Edit `terraform.tfvars` with your values:
 
 ```hcl
 # AWS
-aws_access_key = "TU_AWS_ACCESS_KEY"
-aws_secret_key = "TU_AWS_SECRET_KEY"
-aws_account_id = "TU_ACCOUNT_ID"
+aws_access_key = "YOUR_AWS_ACCESS_KEY"
+aws_secret_key = "YOUR_AWS_SECRET_KEY"
+aws_account_id = "YOUR_ACCOUNT_ID"
 
 # Snowflake
-snowflake_user     = "TU_USUARIO"
-snowflake_password = "TU_PASSWORD"
-snowflake_account  = "TU_ACCOUNT"
+snowflake_user     = "YOUR_USER"
+snowflake_password = "YOUR_PASSWORD"
+snowflake_account  = "YOUR_ACCOUNT"
 
 # S3
-s3_bucket_name = "mi-bucket-unico-kms"  # Debe ser único globalmente
+s3_bucket_name = "my-unique-kms-bucket"  # Must be globally unique
 ```
 
-### Paso 3: Desplegar
+### Step 3: Deploy
 
 ```bash
-# Inicializar Terraform
+# Initialize Terraform
 terraform init
 
-# Ver plan de ejecución
+# View execution plan
 terraform plan
 
-# Aplicar cambios
+# Apply changes
 terraform apply
 ```
 
-⚠️ **Importante**: El despliegue puede tardar 5-10 minutos debido a las dependencias entre recursos.
+⚠️ **Important**: Deployment may take 5-10 minutes due to dependencies between resources.
 
-## 🔄 Proceso de Despliegue Automático
+## 🔄 Automatic Deployment Process
 
-Este proyecto gestiona automáticamente las dependencias circulares entre AWS y Snowflake usando un approach de dos fases:
+This project automatically manages circular dependencies between AWS and Snowflake using a two-phase approach:
 
-### Fase 1: Recursos Base
-1. ✅ Crear KMS key con política dinámica
-2. ✅ Crear bucket S3 con encriptación KMS
-3. ✅ Crear IAM role con trust policy temporal
+### Phase 1: Base Resources
+1. ✅ Create KMS key with dynamic policy
+2. ✅ Create S3 bucket with KMS encryption
+3. ✅ Create IAM role with temporary trust policy
 
-### Fase 2: Actualización Automática
-1. ✅ Crear Storage Integration en Snowflake (genera External ID)
-2. ✅ `null_resource` actualiza automáticamente la trust policy del IAM role con:
-   - Snowflake IAM User ARN correcto
-   - External ID del Storage Integration
-3. ✅ Crear External Stage
+### Phase 2: Automatic Update
+1. ✅ Create Storage Integration in Snowflake (generates External ID)
+2. ✅ `null_resource` automatically updates IAM role trust policy with:
+   - Correct Snowflake IAM User ARN
+   - Storage Integration External ID
+3. ✅ Create External Stage
 
-**Nota**: El proceso es completamente automático. El `null_resource` en `iam_updated.tf` ejecuta `aws iam update-assume-role-policy` para actualizar el trust policy después de que el Storage Integration está creado.
+**Note**: The process is completely automatic. The `null_resource` in `iam_updated.tf` executes `aws iam update-assume-role-policy` to update the trust policy after the Storage Integration is created.
 
-## 📊 Outputs Importantes
+## 📊 Important Outputs
 
-Después del despliegue, obtendrás:
+After deployment, you'll get:
 
 ```bash
-# Ver todos los outputs
+# View all outputs
 terraform output
 
-# Outputs específicos
+# Specific outputs
 terraform output kms_key_arn
 terraform output s3_bucket_name
 terraform output snowflake_iam_user_arn
 ```
 
-### Outputs Clave:
+### Key Outputs:
 
-- **kms_key_arn**: ARN de la KMS key para encriptación
-- **kms_key_alias**: Alias amigable (alias/snowflake-s3-kms-stage)
-- **s3_bucket_name**: Nombre del bucket creado
-- **iam_role_arn**: ARN del role de Snowflake
-- **snowflake_iam_user_arn**: Usuario IAM de Snowflake (crítico)
-- **snowflake_external_id**: External ID para trust policy
+- **kms_key_arn**: KMS key ARN for encryption
+- **kms_key_alias**: Friendly alias (alias/snowflake-s3-kms-stage)
+- **s3_bucket_name**: Created bucket name
+- **iam_role_arn**: Snowflake role ARN
+- **snowflake_iam_user_arn**: Snowflake IAM user (critical)
+- **snowflake_external_id**: External ID for trust policy
 
-## 🔍 Verificación Post-Despliegue
+## 🔍 Post-Deployment Verification
 
-### 1. Verificar KMS Key
+### 1. Verify KMS Key
 
 ```bash
-# Describir la key
+# Describe the key
 aws kms describe-key --key-id alias/snowflake-s3-kms-stage --region eu-west-1
 
-# Ver política
+# View policy
 aws kms get-key-policy \
   --key-id alias/snowflake-s3-kms-stage \
   --policy-name default \
   --region eu-west-1
 ```
 
-### 2. Verificar Encriptación S3
+### 2. Verify S3 Encryption
 
 ```bash
-# Ver configuración de encriptación
-aws s3api get-bucket-encryption --bucket <tu-bucket>
+# View encryption configuration
+aws s3api get-bucket-encryption --bucket <your-bucket>
 
-# Debe mostrar:
+# Should display:
 # "SSEAlgorithm": "aws:kms"
 # "KMSMasterKeyID": "arn:aws:kms:..."
 # "BucketKeyEnabled": true
 ```
 
-### 3. Test de Carga de Archivos
+### 3. File Upload Test
 
 ```bash
-# Crear archivo de prueba
+# Create test file
 echo "col1,col2\nvalue1,value2" > test.csv
 
-# Subir a S3
-aws s3 cp test.csv s3://<tu-bucket>/snowflake-data/
+# Upload to S3
+aws s3 cp test.csv s3://<your-bucket>/snowflake-data/
 
-# Verificar encriptación del objeto
+# Verify object encryption
 aws s3api head-object \
-  --bucket <tu-bucket> \
+  --bucket <your-bucket> \
   --key snowflake-data/test.csv \
   --query 'ServerSideEncryption,SSEKMSKeyId'
 
-# Debe retornar:
+# Should return:
 # "ServerSideEncryption": "aws:kms"
 # "SSEKMSKeyId": "arn:aws:kms:eu-west-1:..."
 ```
 
-### 4. Verificar en Snowflake
+### 4. Verify in Snowflake
 
 ```sql
--- Conectar a Snowflake
+-- Connect to Snowflake
 USE ROLE ACCOUNTADMIN;
 USE DATABASE DEMO_KMS_V3;
 USE SCHEMA DEMO_SCHEMA;
 
--- Verificar Storage Integration
+-- Verify Storage Integration
 DESC INTEGRATION S3_INTEGRATION_KMS;
 
--- Ver configuración de encriptación
+-- View encryption configuration
 SHOW PARAMETERS LIKE 'ENCRYPTION%' IN INTEGRATION S3_INTEGRATION_KMS;
 
--- Listar archivos en el stage
+-- List files in stage
 LIST @S3_STAGE_KMS;
 
--- Test de carga
+-- Load test
 CREATE OR REPLACE TABLE test_kms (
   col1 VARCHAR,
   col2 VARCHAR
@@ -232,147 +232,146 @@ FILE_FORMAT = (TYPE = CSV SKIP_HEADER = 1);
 SELECT * FROM test_kms;
 ```
 
-## 💰 Consideraciones de Costos
+## 💰 Cost Considerations
 
 ### KMS Pricing (eu-west-1)
 
-| Concepto | Costo |
+| Concept | Cost |
 |----------|-------|
-| Key storage | ~$1/mes por key |
-| API requests | $0.03 por 10,000 requests |
+| Key storage | ~$1/month per key |
+| API requests | $0.03 per 10,000 requests |
 
-### 🎯 Optimización: S3 Bucket Key
+### 🎯 Optimization: S3 Bucket Key
 
-✅ **Habilitado por defecto** en este proyecto
+✅ **Enabled by default** in this project
 
-- Reduce requests a KMS en ~99%
-- Ahorro significativo en buckets con muchos objetos
-- Sin impacto en seguridad
+- Reduces KMS requests by ~99%
+- Significant savings in buckets with many objects
 
-**Ejemplo de ahorro:**
-- Sin Bucket Key: 1M objetos = $3,000/mes en KMS
-- Con Bucket Key: 1M objetos = ~$30/mes en KMS
+**Savings example:**
+- Without Bucket Key: 1M objects = $3,000/month in KMS
+- With Bucket Key: 1M objects = ~$30/month in KMS
 
-## 🔐 Seguridad
+## 🔐 Security
 
-### Características de Seguridad Implementadas:
+### Implemented Security Features:
 
-1. **KMS Key Rotation**: Rotación automática anual
-2. **External ID**: Previene confused deputy attack
-3. **Least Privilege**: Permisos IAM mínimos necesarios
-4. **Condition Keys**: KMS solo vía S3 service
-5. **Public Block**: Bucket completamente privado
-6. **Versioning**: Protección contra borrado accidental
-7. **Bucket Policy**: Restricción a IAM role específico
+1. **KMS Key Rotation**: Automatic annual rotation
+2. **External ID**: Prevents confused deputy attack
+3. **Least Privilege**: Minimum necessary IAM permissions
+4. **Condition Keys**: KMS only via S3 service
+5. **Public Block**: Completely private bucket
+6. **Versioning**: Protection against accidental deletion
+7. **Bucket Policy**: Restriction to specific IAM role
 
-### Políticas de KMS Key:
+### KMS Key Policies:
 
-La KMS key permite:
-- ✅ Root account: Administración completa
-- ✅ S3 service: Encrypt/Decrypt para el bucket
-- ✅ IAM Role Snowflake: Decrypt vía S3
-- ✅ Snowflake IAM User: Decrypt vía S3
+The KMS key allows:
+- ✅ Root account: Full administration
+- ✅ S3 service: Encrypt/Decrypt for the bucket
+- ✅ Snowflake IAM Role: Decrypt via S3
+- ✅ Snowflake IAM User: Decrypt via S3
 
-## 🚨 Solución de Problemas
+## 🚨 Troubleshooting
 
 ### Error: "Access Denied - KMS"
 
-**Causa**: Snowflake no puede usar la KMS key
+**Cause**: Snowflake cannot use the KMS key
 
-**Solución**:
+**Solution**:
 ```bash
-# Verificar política de KMS
+# Verify KMS policy
 aws kms get-key-policy --key-id alias/snowflake-s3-kms-stage --policy-name default
 
-# Verificar que incluye el Snowflake IAM User ARN
+# Verify it includes the Snowflake IAM User ARN
 terraform output snowflake_iam_user_arn
 ```
 
 ### Error: "The ciphertext refers to a customer master key that does not exist"
 
-**Causa**: KMS key ARN incorrecto en Storage Integration
+**Cause**: Incorrect KMS key ARN in Storage Integration
 
-**Solución**:
+**Solution**:
 ```sql
--- Verificar en Snowflake
+-- Verify in Snowflake
 DESC INTEGRATION S3_INTEGRATION_KMS;
 
--- Re-aplicar Terraform
+-- Re-apply Terraform
 terraform apply -refresh-only
 terraform apply
 ```
 
-### Error: Trust Policy Incorrecto
+### Error: Incorrect Trust Policy
 
-**Causa**: IAM role tiene un External ID antiguo o incorrecto
+**Cause**: IAM role has an old or incorrect External ID
 
-**Solución**:
+**Solution**:
 ```bash
-# El null_resource debería actualizar automáticamente el trust policy
-# Si no funciona, ejecuta manualmente:
+# null_resource should automatically update the trust policy
+# If it doesn't work, run manually:
 terraform taint null_resource.update_iam_trust_policy
 terraform apply
 
-# O verifica el External ID correcto:
+# Or verify the correct External ID:
 terraform output snowflake_external_id
 ```
 
-### Nota sobre Dependencias Circulares
+### Note on Circular Dependencies
 
-✅ **Este problema está resuelto automáticamente** por el proyecto usando `null_resource`.
+✅ **This problem is automatically resolved** by the project using `null_resource`.
 
-El approach de dos fases maneja la dependencia circular:
-1. IAM role se crea con trust policy temporal
-2. Storage Integration se crea y genera External ID
-3. `null_resource` actualiza automáticamente el trust policy con valores correctos
+The two-phase approach handles the circular dependency:
+1. IAM role is created with temporary trust policy
+2. Storage Integration is created and generates External ID
+3. `null_resource` automatically updates the trust policy with correct values
 
-No necesitas intervenir manualmente.
+No manual intervention needed.
 
-## 🔄 Actualización del Proyecto
+## 🔄 Project Updates
 
-### Cambiar nombre del bucket:
+### Change bucket name:
 
 ```bash
-# Editar terraform.tfvars
-s3_bucket_name = "nuevo-nombre-bucket"
+# Edit terraform.tfvars
+s3_bucket_name = "new-bucket-name"
 
-# Aplicar (creará nuevo bucket, el anterior debe eliminarse manualmente)
+# Apply (will create new bucket, old one must be deleted manually)
 terraform apply
 ```
 
-### Cambiar región:
+### Change region:
 
 ```bash
-# Editar terraform.tfvars
+# Edit terraform.tfvars
 aws_region = "us-east-1"
 
-# Destruir recursos existentes
+# Destroy existing resources
 terraform destroy
 
-# Volver a crear en nueva región
+# Recreate in new region
 terraform apply
 ```
 
-## 🗑️ Limpieza
+## 🗑️ Cleanup
 
-Para destruir todos los recursos:
+To destroy all resources:
 
 ```bash
-# Ver qué se va a destruir
+# View what will be destroyed
 terraform plan -destroy
 
-# Destruir todo
+# Destroy everything
 terraform destroy
 
-# Confirmar con: yes
+# Confirm with: yes
 ```
 
-⚠️ **Advertencia**: 
-- La KMS key entrará en periodo de eliminación (10 días por defecto)
-- Los objetos en S3 se eliminarán permanentemente
-- La Storage Integration en Snowflake se eliminará
+⚠️ **Warning**: 
+- KMS key will enter deletion period (10 days by default)
+- S3 objects will be permanently deleted
+- Storage Integration in Snowflake will be deleted
 
-## 📚 Referencias
+## 📚 References
 
 - [Snowflake: Using AWS KMS](https://docs.snowflake.com/en/user-guide/data-load-s3-kms)
 - [AWS KMS Best Practices](https://docs.aws.amazon.com/kms/latest/developerguide/best-practices.html)
@@ -380,41 +379,41 @@ terraform destroy
 - [Terraform AWS Provider](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
 - [Terraform Snowflake Provider](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/latest/docs)
 
-## 🤝 Soporte
+## 🤝 Support
 
-Si encuentras problemas:
+If you encounter problems:
 
-1. Verifica los logs de Terraform: `terraform show`
-2. Revisa los outputs: `terraform output`
-3. Consulta la sección de solución de problemas
-4. Verifica las políticas de IAM y KMS manualmente
+1. Check Terraform logs: `terraform show`
+2. Review outputs: `terraform output`
+3. Consult the troubleshooting section
+4. Verify IAM and KMS policies manually
 
-## 📝 Notas Importantes
+## 📝 Important Notes
 
-- ⚠️ **Credenciales sensibles**: Nunca commitees `terraform.tfvars`
-- ⚠️ **State file**: El archivo `.tfstate` contiene información sensible
-- ⚠️ **KMS deletion**: Las keys tienen periodo de espera antes de eliminarse
-- ⚠️ **Costos**: Monitorea el uso de KMS API calls
-- ✅ **Bucket Key**: Ya está habilitado para reducir costos
-- ✅ **Rotación automática**: La KMS key rota anualmente
+- ⚠️ **Sensitive credentials**: Never commit `terraform.tfvars`
+- ⚠️ **State file**: The `.tfstate` file contains sensitive information
+- ⚠️ **KMS deletion**: Keys have a waiting period before deletion
+- ⚠️ **Costs**: Monitor KMS API calls usage
+- ✅ **Bucket Key**: Already enabled to reduce costs
+- ✅ **Automatic rotation**: KMS key rotates annually
 
-## ✅ Checklist de Implementación
+## ✅ Implementation Checklist
 
-- [x] Crear KMS key con rotación automática
-- [x] Configurar política de KMS key
-- [x] Actualizar encriptación de S3 a aws:kms
-- [x] Activar S3 Bucket Key para reducir costos
-- [x] Añadir permisos KMS al IAM role de Snowflake
-- [x] Configurar Storage Integration con KMS
-- [x] Crear External Stage
-- [x] Documentar proceso de verificación
-- [ ] Test completo de carga de datos
-- [ ] Configurar CloudTrail para auditar KMS (opcional)
-- [ ] Implementar CloudWatch alarms (opcional)
+- [x] Create KMS key with automatic rotation
+- [x] Configure KMS key policy
+- [x] Update S3 encryption to aws:kms
+- [x] Enable S3 Bucket Key to reduce costs
+- [x] Add KMS permissions to Snowflake IAM role
+- [x] Configure Storage Integration with KMS
+- [x] Create External Stage
+- [x] Document verification process
+- [ ] Complete data load test
+- [ ] Configure CloudTrail to audit KMS (optional)
+- [ ] Implement CloudWatch alarms (optional)
 
-## 📊 Próximos Pasos Recomendados
+## 📊 Recommended Next Steps
 
-1. **Configurar CloudTrail** para auditar accesos a KMS:
+1. **Configure CloudTrail** to audit KMS access:
 ```hcl
 resource "aws_cloudtrail" "kms_audit" {
   name           = "kms-audit-trail"
@@ -432,12 +431,12 @@ resource "aws_cloudtrail" "kms_audit" {
 }
 ```
 
-2. **Configurar CloudWatch Alarms** para fallos de KMS
-3. **Implementar Tags adicionales** para cost allocation
-4. **Configurar backup** del state file en S3 backend
+2. **Configure CloudWatch Alarms** for KMS failures
+3. **Implement additional Tags** for cost allocation
+4. **Configure backup** of state file in S3 backend
 
 ---
 
-**Versión**: 1.0  
-**Última actualización**: Noviembre 2025  
-**Autor**: Terraform S3-Snowflake-KMS Integration Project
+**Version**: 1.0  
+**Last updated**: November 2025  
+**Author**: Terraform S3-Snowflake-KMS Integration Project

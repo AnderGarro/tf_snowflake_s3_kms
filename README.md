@@ -17,14 +17,14 @@ Complete and secure Terraform project that implements integration between **AWS 
 - ✅ **Lifecycle Policies**: Automatic management of versions and old files
 - ✅ **Total Security**: Fully private bucket with multiple security layers
 
-## 🏗️ Arquitectura
+## 🏗️ Architecture
 
 ```
 ┌─────────────────┐
 │   Snowflake     │
 │  (Storage Int)  │
 └────────┬────────┘
-         │ Assume Role (con External ID)
+         │ Assume Role (with External ID)
          ↓
 ┌─────────────────┐      ┌──────────────┐
 │   IAM Role      │─────→│   KMS Key    │
@@ -42,61 +42,61 @@ Complete and secure Terraform project that implements integration between **AWS 
 └────────────────────────────────┘
 ```
 
-## 🔧 Solución Técnica: Dependencias Circulares
+## 🔧 Technical Solution: Circular Dependencies
 
-Este proyecto resuelve automáticamente la dependencia circular entre IAM Role y Storage Integration usando un **approach de dos fases**:
+This project automatically resolves the circular dependency between IAM Role and Storage Integration using a **two-phase approach**:
 
-1. **Fase 1**: Crear IAM role con trust policy temporal
-2. **Storage Integration**: Snowflake crea integration y genera External ID
-3. **Fase 2**: `null_resource` ejecuta `aws iam update-assume-role-policy` automáticamente
+1. **Phase 1**: Create IAM role with temporary trust policy
+2. **Storage Integration**: Snowflake creates integration and generates External ID
+3. **Phase 2**: `null_resource` automatically executes `aws iam update-assume-role-policy`
 
-**Resultado**: Despliegue 100% automático con un solo `terraform apply`
+**Result**: 100% automatic deployment with a single `terraform apply`
 
-## 🚀 Inicio Rápido
+## 🚀 Quick Start
 
-### Prerrequisitos
+### Prerequisites
 
 - [Terraform](https://www.terraform.io/downloads) >= 1.0
-- [AWS CLI](https://aws.amazon.com/cli/) configurado
-- Cuenta Snowflake con permisos de ACCOUNTADMIN
-- Credenciales AWS con permisos para KMS, S3, IAM
+- [AWS CLI](https://aws.amazon.com/cli/) configured
+- Snowflake account with ACCOUNTADMIN permissions
+- AWS credentials with permissions for KMS, S3, IAM
 
-### Instalación
+### Installation
 
 ```bash
-# Clonar repositorio
+# Clone repository
 git clone https://github.com/AnderGarro/tf_snowflake_s3_kms.git
 cd tf_snowflake_s3_kms
 
-# Copiar y configurar variables
+# Copy and configure variables
 cp terraform.tfvars.example terraform.tfvars
-nano terraform.tfvars  # Editar con tus credenciales
+nano terraform.tfvars  # Edit with your credentials
 
-# Inicializar Terraform
+# Initialize Terraform
 terraform init
 
-# Desplegar
+# Deploy
 terraform apply
 ```
 
-⏱️ El despliegue completo tarda ~5-10 minutos.
+⏱️ Complete deployment takes ~5-10 minutes.
 
-## 📋 Configuración
+## 📋 Configuration
 
-Edita `terraform.tfvars` con tus valores:
+Edit `terraform.tfvars` with your values:
 
 ```hcl
 # AWS
 aws_region     = "eu-west-1"
-aws_account_id = "TU_ACCOUNT_ID"
-aws_access_key = "TU_ACCESS_KEY"
-aws_secret_key = "TU_SECRET_KEY"
+aws_account_id = "YOUR_ACCOUNT_ID"
+aws_access_key = "YOUR_ACCESS_KEY"
+aws_secret_key = "YOUR_SECRET_KEY"
 
 # S3
 s3_bucket_name = "my-unique-bucket"  # Must be globally unique
 
 # Snowflake
-snowflake_account  = "TU_ACCOUNT"
+snowflake_account  = "YOUR_ACCOUNT"
 snowflake_user     = "YOUR_USER"
 snowflake_password = "YOUR_PASSWORD"
 snowflake_database = "DEMO_KMS_V3"

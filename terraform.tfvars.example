@@ -1,0 +1,30 @@
+# AWS Configuration
+aws_region     = "eu-west-1"
+aws_account_id = "997439898896"
+aws_access_key = "YOUR_AWS_ACCESS_KEY"
+aws_secret_key = "YOUR_AWS_SECRET_KEY"
+
+# S3 Configuration
+s3_bucket_name = "s3-snow-kms-test-v3"
+s3_prefix      = "snowflake-data/"
+
+# KMS Configuration
+enable_kms_encryption   = true
+kms_key_deletion_window = 10
+enable_kms_key_rotation = true
+
+# Snowflake Configuration
+snowflake_account  = "RAGRCLW-SN28326"
+snowflake_user     = "YOUR_SNOWFLAKE_USER"
+snowflake_password = "YOUR_SNOWFLAKE_PASSWORD"
+snowflake_role     = "ACCOUNTADMIN"
+snowflake_database = "DEMO_KMS_V3"
+snowflake_schema   = "DEMO_SCHEMA"
+
+# Storage Integration and Stage Names
+storage_integration_name = "S3_INTEGRATION_KMS"
+stage_name              = "S3_STAGE_KMS"
+
+# General Configuration
+environment  = "dev"
+project_name = "snowflake-s3-kms"
